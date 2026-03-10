@@ -3,10 +3,19 @@ from pathlib import Path
 
 import pytest
 
-from notes import get_week_dates, load_notes_for_week, format_notes_for_llm, get_word_count
+from local_first_common.obsidian import (
+    get_week_dates,
+    load_daily_notes_for_week,
+    format_notes_for_llm,
+)
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def get_word_count(text: str) -> int:
+    """Simple word count estimation (inlined from old notes.py)."""
+    return len(text.split())
 
 
 class TestGetWeekDates:
@@ -40,13 +49,13 @@ class TestLoadNotesForWeek:
             (timeline / f.name).write_text(f.read_text())
 
         dates = get_week_dates(datetime.date(2026, 2, 23))
-        notes = load_notes_for_week(tmp_path, dates)
+        notes = load_daily_notes_for_week(tmp_path, dates, subdir="Timeline")
         assert len(notes) == 2
 
     def test_returns_empty_list_for_missing_notes(self, tmp_path):
         (tmp_path / "Timeline").mkdir()
         dates = get_week_dates(datetime.date(2025, 1, 6))
-        notes = load_notes_for_week(tmp_path, dates)
+        notes = load_daily_notes_for_week(tmp_path, dates, subdir="Timeline")
         assert notes == []
 
     def test_note_has_expected_keys(self, tmp_path):
@@ -56,13 +65,13 @@ class TestLoadNotesForWeek:
             (timeline / f.name).write_text(f.read_text())
 
         dates = get_week_dates(datetime.date(2026, 2, 23))
-        notes = load_notes_for_week(tmp_path, dates)
+        notes = load_daily_notes_for_week(tmp_path, dates, subdir="Timeline")
         assert all("date" in n and "content" in n and "path" in n for n in notes)
 
-    def test_falls_back_to_vault_root_when_no_timeline(self, tmp_path):
+    def test_loads_from_vault_root_when_no_subdir(self, tmp_path):
         (tmp_path / "2026-02-23.md").write_text("hello")
         dates = [datetime.date(2026, 2, 23)]
-        notes = load_notes_for_week(tmp_path, dates)
+        notes = load_daily_notes_for_week(tmp_path, dates)
         assert len(notes) == 1
 
 

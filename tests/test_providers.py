@@ -3,12 +3,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from providers.base import BaseProvider
-from providers.ollama import OllamaProvider
-from providers.anthropic import AnthropicProvider
-from providers.groq import GroqProvider
-from providers.deepseek import DeepSeekProvider
-from providers import PROVIDERS
+from local_first_common.providers.base import BaseProvider
+from local_first_common.providers.ollama import OllamaProvider
+from local_first_common.providers.anthropic import AnthropicProvider
+from local_first_common.providers.groq import GroqProvider
+from local_first_common.providers.deepseek import DeepSeekProvider
+from local_first_common.providers import PROVIDERS
 from schema import WeekReview
 
 
@@ -67,7 +67,7 @@ class TestOllamaProvider:
         mock_response.json.return_value = {"response": SAMPLE_REVIEW_JSON}
         mock_response.raise_for_status = MagicMock()
 
-        with patch("providers.ollama.httpx.Client") as mock_client_cls:
+        with patch("local_first_common.providers.ollama.httpx.Client") as mock_client_cls:
             mock_client = MagicMock()
             mock_client.__enter__ = MagicMock(return_value=mock_client)
             mock_client.__exit__ = MagicMock(return_value=False)
@@ -84,26 +84,19 @@ class TestOllamaProvider:
         mock_response = MagicMock()
         mock_response.status_code = 404
 
-        with patch("providers.ollama.httpx.Client") as mock_client_cls:
+        with patch("local_first_common.providers.ollama.httpx.Client") as mock_client_cls:
             mock_client = MagicMock()
             mock_client.__enter__ = MagicMock(return_value=mock_client)
             mock_client.__exit__ = MagicMock(return_value=False)
             mock_client.post.return_value = mock_response
             mock_client_cls.return_value = mock_client
 
-            with patch("providers.ollama.httpx.Client"):
-                p = OllamaProvider(model="nonexistent-model")
-                # Patch _get_installed_models to avoid real network call
-                p._get_installed_models = MagicMock(return_value=[])
+            p = OllamaProvider(model="nonexistent-model")
+            # Patch _get_installed_models to avoid real network call
+            p._get_installed_models = MagicMock(return_value=[])
 
-                # Re-run complete with the mock that returns 404
-                with patch("providers.ollama.httpx.Client") as mc2:
-                    mc2.return_value.__enter__ = MagicMock(return_value=mock_client)
-                    mc2.return_value.__exit__ = MagicMock(return_value=False)
-                    mock_client.post.return_value = mock_response
-
-                    with pytest.raises(RuntimeError, match="not found"):
-                        p.complete("sys", "usr")
+            with pytest.raises(RuntimeError, match="not found"):
+                p.complete("sys", "usr")
 
 
 class TestAnthropicProvider:
@@ -125,7 +118,8 @@ class TestAnthropicProvider:
         mock_message = MagicMock()
         mock_message.content = [mock_content]
 
-        with patch("providers.anthropic.Anthropic") as mock_anthropic:
+        # The installed local_first_common uses a lazy `_Anthropic` alias
+        with patch("local_first_common.providers.anthropic._Anthropic") as mock_anthropic:
             mock_client = MagicMock()
             mock_client.messages.create.return_value = mock_message
             mock_anthropic.return_value = mock_client
@@ -152,7 +146,7 @@ class TestGroqProvider:
             "choices": [{"message": {"content": SAMPLE_REVIEW_JSON}}]
         }
 
-        with patch("providers.groq.httpx.Client") as mock_client_cls:
+        with patch("local_first_common.providers.groq.httpx.Client") as mock_client_cls:
             mock_client = MagicMock()
             mock_client.__enter__ = MagicMock(return_value=mock_client)
             mock_client.__exit__ = MagicMock(return_value=False)

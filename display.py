@@ -31,11 +31,11 @@ def display_week_review(review: WeekReview):
     if review.links_saved:
         console.print("\n[bold yellow]Links Saved[/bold yellow]")
         for link in review.links_saved:
-            console.print(f"🔗 [underline]{link}[/underline]")
+            console.print(f"[underline]{link}[/underline]")
 
     if review.open_threads:
         console.print("\n[bold red]Open Threads[/bold red]")
         for thread in review.open_threads:
-            console.print(f"❓ {thread}")
+            console.print(f"  {thread}")
 
     console.print(f"\n[dim]Input: {review.word_count_input} words[/dim]\n")

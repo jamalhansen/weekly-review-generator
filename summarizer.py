@@ -1,64 +1,74 @@
-import argparse
 import datetime
-import json
-import os
 import sys
-from pathlib import Path
+from typing import Annotated, Optional
 
-from notes import (
+import typer
+
+from local_first_common.providers import PROVIDERS
+from local_first_common.cli import (
+    provider_option,
+    model_option,
+    dry_run_option,
+    verbose_option,
+    debug_option,
+    resolve_provider,
+)
+from local_first_common.obsidian import (
     find_vault_root,
     get_week_dates,
-    load_notes_for_week,
+    load_daily_notes_for_week,
     format_notes_for_llm,
-    get_word_count,
 )
-from providers import PROVIDERS
 from schema import WeekReview
 from prompts import get_system_prompt, get_user_prompt
 from display import display_week_review
 from markdown_output import format_as_markdown
 
+app = typer.Typer()
 
-def main():
-    parser = argparse.ArgumentParser(description="Summarize a week of Obsidian daily notes.")
-    parser.add_argument("--week", "-w", type=str, help="Date in the target week (YYYY-MM-DD). Defaults to today.")
-    parser.add_argument(
-        "--provider", "-p",
-        type=str,
-        choices=list(PROVIDERS.keys()),
-        default=os.environ.get("MODEL_PROVIDER", "ollama"),
-        help="LLM provider to use (default: ollama).",
-    )
-    parser.add_argument("--model", "-m", type=str, help="Override the provider's default model.")
-    parser.add_argument(
-        "--output", "-o",
-        type=str,
-        choices=["text", "json", "markdown"],
-        default="text",
-        help="Output format (default: text).",
-    )
-    parser.add_argument("--dry-run", "-n", action="store_true", help="Print the markdown to stdout instead of writing to the vault.")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Show the files being used for the summary.")
-    parser.add_argument("--debug", "-d", action="store_true", help="Show raw LLM input and output.")
 
-    args = parser.parse_args()
+def get_word_count(text: str) -> int:
+    """Simple word count estimation."""
+    return len(text.split())
+
+
+@app.command()
+def summarize(
+    week: Annotated[
+        Optional[str],
+        typer.Option("--week", "-w", help="ISO date in target week (default: current week)"),
+    ] = None,
+    provider: Annotated[str, provider_option(PROVIDERS)] = "ollama",
+    model: Annotated[Optional[str], model_option()] = None,
+    output: Annotated[
+        str,
+        typer.Option("--output", "-o", help="Output format: text, json, or markdown"),
+    ] = "text",
+    dry_run: Annotated[bool, dry_run_option()] = False,
+    verbose: Annotated[bool, verbose_option()] = False,
+    debug: Annotated[bool, debug_option()] = False,
+):
+    """Summarize a week of Obsidian daily notes using an LLM."""
 
     # --- Fail fast: validate inputs before doing any work ---
 
-    if args.week:
+    if week:
         try:
-            target_date = datetime.date.fromisoformat(args.week)
+            target_date = datetime.date.fromisoformat(week)
         except ValueError:
-            print(f"Error: Invalid date format '{args.week}'. Use YYYY-MM-DD.")
-            sys.exit(1)
+            typer.echo(f"Error: Invalid date format '{week}'. Use YYYY-MM-DD.")
+            raise typer.Exit(1)
     else:
         target_date = datetime.date.today()
 
     try:
-        provider = PROVIDERS[args.provider](model=args.model, debug=args.debug)
+        llm_provider = resolve_provider(PROVIDERS, provider, model, debug=debug)
+    except typer.BadParameter as e:
+        typer.echo(f"Error: {e}")
+        raise typer.Exit(1)
     except RuntimeError as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+        typer.echo(f"Error: {e}")
+        raise typer.Exit(1)
 
     vault_root = find_vault_root()
 
@@ -67,32 +77,32 @@ def main():
     dates = get_week_dates(target_date)
     week_start = dates[0].isoformat()
 
-    notes = load_notes_for_week(vault_root, dates)
+    notes = load_daily_notes_for_week(vault_root, dates, subdir="Timeline")
     processed = len(notes)
     skipped = len(dates) - processed
 
     if not notes:
-        print(f"No notes found for the week of {week_start} in {vault_root}")
-        sys.exit(0)
+        typer.echo(f"No notes found for the week of {week_start} in {vault_root}")
+        raise typer.Exit(0)
 
-    if args.verbose:
-        print(f"\n[Files used for summary]")
+    if verbose:
+        typer.echo(f"\n[Files used for summary]")
         for note in notes:
-            print(f"  {note['path']}")
-        print()
+            typer.echo(f"  {note['path']}")
+        typer.echo("")
 
     notes_text = format_notes_for_llm(notes)
     word_count = get_word_count(notes_text)
 
     if word_count > 6000:
-        print(f"Warning: Input text is {word_count} words. Large inputs may be truncated or cause errors.")
+        typer.echo(f"Warning: Input text is {word_count} words. Large inputs may be truncated or cause errors.")
 
     # --- Call LLM ---
 
     try:
         system = get_system_prompt()
         user = get_user_prompt(notes_text)
-        response_data = provider.complete(system=system, user=user, response_model=WeekReview)
+        response_data = llm_provider.complete(system=system, user=user, response_model=WeekReview)
 
         if isinstance(response_data, dict):
             response_data["week_of"] = week_start
@@ -114,12 +124,14 @@ def main():
 
             review = WeekReview(**response_data)
         else:
-            print("Error: Unexpected response format from LLM.")
-            sys.exit(1)
+            typer.echo("Error: Unexpected response format from LLM.")
+            raise typer.Exit(1)
 
+    except typer.Exit:
+        raise
     except Exception as e:
-        print(f"Error during LLM processing: {e}")
-        sys.exit(1)
+        typer.echo(f"Error during LLM processing: {e}")
+        raise typer.Exit(1)
 
     # --- Output ---
 
@@ -130,8 +142,8 @@ def main():
     filename = f"{iso_year}-W{iso_week:02d}.md"
     file_path = timeline_dir / filename
 
-    if args.dry_run:
-        print(md_content)
+    if dry_run:
+        typer.echo(md_content)
     else:
         timeline_dir.mkdir(exist_ok=True)
         save_confirmed = True
@@ -139,24 +151,24 @@ def main():
             response = input(f"File {file_path} already exists. Overwrite? (y/N): ").lower()
             if response != "y":
                 save_confirmed = False
-                print("Save cancelled.")
+                typer.echo("Save cancelled.")
 
         if save_confirmed:
             try:
                 file_path.write_text(md_content)
-                print(f"Saved review to {file_path}")
+                typer.echo(f"Saved review to {file_path}")
             except Exception as e:
-                print(f"Error: Failed to save to {file_path}: {e}")
+                typer.echo(f"Error: Failed to save to {file_path}: {e}")
 
-    if args.output == "json":
-        print(review.model_dump_json(indent=2))
-    elif args.output == "markdown":
-        print(md_content)
-    elif not args.dry_run:
+    if output == "json":
+        typer.echo(review.model_dump_json(indent=2))
+    elif output == "markdown":
+        typer.echo(md_content)
+    elif not dry_run:
         display_week_review(review)
 
-    print(f"\nDone. Processed: {processed}, Skipped: {skipped}")
+    typer.echo(f"\nDone. Processed: {processed}, Skipped: {skipped}")
 
 
 if __name__ == "__main__":
-    main()
+    app()

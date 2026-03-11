@@ -1,18 +1,12 @@
 import datetime
+import os
 import sys
 from typing import Annotated, Optional
 
 import typer
 
 from local_first_common.providers import PROVIDERS
-from local_first_common.cli import (
-    provider_option,
-    model_option,
-    dry_run_option,
-    verbose_option,
-    debug_option,
-    resolve_provider,
-)
+from local_first_common.cli import resolve_provider
 from local_first_common.obsidian import (
     find_vault_root,
     get_week_dates,
@@ -38,15 +32,30 @@ def summarize(
         Optional[str],
         typer.Option("--week", "-w", help="ISO date in target week (default: current week)"),
     ] = None,
-    provider: Annotated[str, provider_option(PROVIDERS)] = "ollama",
-    model: Annotated[Optional[str], model_option()] = None,
+    provider: Annotated[
+        str,
+        typer.Option("--provider", "-p", help=f"LLM provider. Choices: {', '.join(PROVIDERS.keys())}"),
+    ] = os.environ.get("MODEL_PROVIDER", "ollama"),
+    model: Annotated[
+        Optional[str],
+        typer.Option("--model", "-m", help="Override the provider's default model."),
+    ] = None,
     output: Annotated[
         str,
         typer.Option("--output", "-o", help="Output format: text, json, or markdown"),
     ] = "text",
-    dry_run: Annotated[bool, dry_run_option()] = False,
-    verbose: Annotated[bool, verbose_option()] = False,
-    debug: Annotated[bool, debug_option()] = False,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", "-n", help="Preview output without writing files or calling LLM."),
+    ] = False,
+    verbose: Annotated[
+        bool,
+        typer.Option("--verbose", "-v", help="Show extra debug output."),
+    ] = False,
+    debug: Annotated[
+        bool,
+        typer.Option("--debug", "-d", help="Show raw prompts and LLM responses."),
+    ] = False,
 ):
     """Summarize a week of Obsidian daily notes using an LLM."""
 

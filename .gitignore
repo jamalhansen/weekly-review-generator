@@ -209,3 +209,6 @@ __marimo__/
 # Local dev overrides
 CLAUDE.md
 uv.toml
+
+# Local working docs
+FINDINGS.md

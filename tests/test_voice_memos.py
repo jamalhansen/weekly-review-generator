@@ -1,7 +1,6 @@
 import datetime
 from pathlib import Path
 
-import pytest
 
 from voice_memos import get_voice_memos
 

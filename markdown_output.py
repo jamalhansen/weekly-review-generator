@@ -13,6 +13,10 @@ def format_review_section(review: WeekReview) -> str:
     if review.headline:
         lines.append(f"> {review.headline}\n")
 
+    if review.key_insight:
+        lines.append("### Key Insight")
+        lines.append(f"{review.key_insight}\n")
+
     if review.highlights:
         lines.append("### Highlights")
         for highlight in review.highlights:
@@ -83,7 +87,11 @@ def format_as_markdown(review: WeekReview) -> str:
     lines = []
     lines.append(f"# Weekly Review: {review.week_of}")
     lines.append(f"\n> {review.headline}\n")
-    
+
+    if review.key_insight:
+        lines.append("## Key Insight")
+        lines.append(f"{review.key_insight}\n")
+
     if review.highlights:
         lines.append("## Highlights")
         for highlight in review.highlights:

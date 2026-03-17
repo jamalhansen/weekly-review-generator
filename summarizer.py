@@ -1,7 +1,7 @@
 import calendar
 import datetime
 import os
-import sys
+import re
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -24,6 +24,32 @@ from triage import get_triage_captures
 from voice_memos import get_voice_memos
 
 app = typer.Typer()
+
+
+def strip_obsidian_callouts(text: str) -> str:
+    """Convert Obsidian callout blocks to plain prose for LLM consumption.
+
+    Callout blocks wrap content in `> ` prefixes, which causes LLMs to treat
+    the content as lower-priority blockquotes. This is especially problematic
+    for Morning Pages, which contain the richest daily content.
+
+    Transforms:
+        > [!pencil]- Click to expand...
+        >
+        > Actual content here.
+    Into:
+        Actual content here.
+    """
+    lines = text.splitlines()
+    result = []
+    for line in lines:
+        # Drop callout opener lines: "> [!type]- ..." or "> [!type]+ ..."
+        if re.match(r"^>\s*\[!", line):
+            continue
+        # Strip leading "> " or ">" from blockquote continuation lines
+        stripped = re.sub(r"^>\s?", "", line)
+        result.append(stripped)
+    return "\n".join(result)
 
 
 def get_word_count(text: str) -> int:
@@ -172,7 +198,7 @@ def summarize(
         raise typer.Exit(0)
 
     if verbose:
-        typer.echo(f"\n[Files used for summary]")
+        typer.echo("\n[Files used for summary]")
         for note in notes:
             typer.echo(f"  {note['path']}")
 
@@ -211,7 +237,7 @@ def summarize(
     if verbose:
         typer.echo("")
 
-    notes_text = format_notes_for_llm(notes)
+    notes_text = strip_obsidian_callouts(format_notes_for_llm(notes))
     word_count = get_word_count(notes_text)
 
     if word_count > 6000:

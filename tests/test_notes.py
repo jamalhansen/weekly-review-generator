@@ -1,7 +1,6 @@
 import datetime
 from pathlib import Path
 
-import pytest
 
 from local_first_common.obsidian import (
     get_week_dates,

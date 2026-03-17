@@ -1,6 +1,4 @@
-from pathlib import Path
 
-import pytest
 
 from schema import WeekReview, WeeklyHighlight
 from markdown_output import format_as_markdown, format_review_section, write_review_section

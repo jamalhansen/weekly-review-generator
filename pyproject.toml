@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "anthropic>=0.84.0",
     "google-genai>=1.65.0",
-    "local-first-common @ git+https://github.com/jamalhansen/local-first-common.git@main",
+    "local-first-common",
     "pydantic>=2.12.5",
     "python-frontmatter>=1.1.0",
     "rich>=14.3.3",
@@ -18,3 +18,6 @@ dependencies = [
 dev = [
     "pytest>=9.0.2",
 ]
+
+[tool.uv.sources]
+local-first-common = { git = "https://github.com/jamalhansen/local-first-common.git", branch = "main" }

@@ -30,10 +30,6 @@ export ANTHROPIC_API_KEY="your-key"
 export GEMINI_API_KEY="your-key"
 export GROQ_API_KEY="your-key"
 export DEEPSEEK_API_KEY="your-key"
-
-# Optional — Phase 2 sources:
-export CONTENT_DISCOVERY_DB_PATH="$HOME/.content-discovery.db"
-export VOICE_MEMOS_DIR="$HOME/voice-memos/transcriptions"
 ```
 
 ### 2. Run the Tool
@@ -41,52 +37,38 @@ export VOICE_MEMOS_DIR="$HOME/voice-memos/transcriptions"
 Summarize the current week (Monday to Sunday):
 
 ```bash
-uv run python summarizer.py
+uv run main.py
 ```
 
 Summarize a specific week:
 
 ```bash
-uv run python summarizer.py -w 2026-03-02
+uv run main.py -w 2026-03-02
 ```
 
 Preview the output without writing to your vault (dry run):
 
 ```bash
-uv run python summarizer.py -n
+uv run main.py -n
 ```
 
 Summarize the last 10 days:
 
 ```bash
-uv run python summarizer.py --days 10
+uv run main.py --days 10
 ```
 
 Summarize the full current month:
 
 ```bash
-uv run python summarizer.py --month
+uv run main.py --month
 ```
-
-Include content discovery and voice memos:
-
-```bash
-uv run python summarizer.py \
-  --discovery-db ~/.content-discovery.db \
-  --voice-memos-dir ~/voice-memos/transcriptions
-```
-
-Use a specific provider and model:
-
-```bash
-uv run python summarizer.py -p anthropic -m claude-sonnet-4-6
-```
-
-By default the review is written to `Timeline/YYYY-Www.md` in your vault. With `--days`, it writes to `Timeline/YYYY-MM-DD--YYYY-MM-DD.md`. With `--month`, it writes to `Timeline/YYYY-MM.md`.
 
 ---
 
 ## CLI Reference
+
+All tools in this series share a common set of CLI flags for model management.
 
 | Flag | Short | Default | Description |
 |------|-------|---------|-------------|
@@ -97,67 +79,33 @@ By default the review is written to `Timeline/YYYY-Www.md` in your vault. With `
 | `--model` | `-m` | provider default | Override the provider's default model. |
 | `--output` | `-o` | `text` | Output format: `text`, `json`, or `markdown`. |
 | `--dry-run` | `-n` | | Print markdown to stdout instead of writing to vault. |
-| `--verbose` | `-v` | | Show which files are being summarized and source counts. |
-| `--debug` | `-d` | | Show raw LLM prompt and response. |
-| `--discovery-db` | | `$CONTENT_DISCOVERY_DB_PATH` | Path to content discovery SQLite DB. |
-| `--voice-memos-dir` | | `$VOICE_MEMOS_DIR` | Directory of processed voice memo transcriptions. |
+| `--verbose` | `-v` | | Print info messages and extra context. |
+| `--debug` | `-d` | | Show raw system/user prompts and raw LLM responses. |
 
 `--days` and `--month` are mutually exclusive.
 
 ---
 
-## Provider Details
-
-| Provider | Default Model | Env Var |
-|----------|--------------|---------|
-| `ollama` | `phi4-mini` | *(none — local)* |
-| `anthropic` | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` |
-| `gemini` | `gemini-2.0-flash` | `GEMINI_API_KEY` |
-| `groq` | `llama-3.3-70b-versatile` | `GROQ_API_KEY` |
-| `deepseek` | `deepseek-chat` | `DEEPSEEK_API_KEY` |
-
-You can also set `MODEL_PROVIDER` as an environment variable to change the default provider without passing `-p` every time.
-
----
-
-## Content Discovery Integration (Phase 2)
-
-When `--discovery-db` is provided (or `CONTENT_DISCOVERY_DB_PATH` is set), the tool queries for items with `status = 'kept'` in the review period:
-
-```sql
-SELECT title, url, summary, tags, score FROM items
-WHERE status = 'kept' AND fetched_at BETWEEN ? AND ?
-ORDER BY score DESC
-```
-
-The source DB is read-only — no writes, no schema changes.
-
-## Voice Memo Integration (Phase 2)
-
-When `--voice-memos-dir` is provided (or `VOICE_MEMOS_DIR` is set), the tool reads `.md` and `.txt` files whose names start with `YYYY-MM-DD`. Files are matched to the review period by date prefix. If the directory doesn't exist or has no matching files, the tool proceeds without memos.
-
----
-
 ## Project Structure
+
+This tool follows the [Local-First AI project blueprint](https://github.com/jamalhansen/local-first-common).
 
 ```
 weekly-review-generator/
-├── summarizer.py        # CLI entrypoint
+├── main.py              # Canonical entry point
+├── summarizer.py        # CLI command definitions
+├── logic.py             # Core processing logic
 ├── discovery.py         # Content discovery DB reader
 ├── voice_memos.py       # Voice memo transcription reader
 ├── schema.py            # Pydantic models (WeekReview, WeeklyHighlight)
 ├── prompts.py           # System and user prompt templates
 ├── display.py           # Rich terminal output
 ├── markdown_output.py   # Obsidian-compatible markdown formatter
-├── tests/
-│   ├── fixtures/        # Sample daily notes for testing
-│   ├── test_notes.py
-│   ├── test_schema.py
-│   ├── test_markdown_output.py
-│   ├── test_providers.py
-│   ├── test_discovery.py
-│   └── test_voice_memos.py
-└── pyproject.toml
+├── pyproject.toml       # Managed by uv
+└── tests/
+    ├── fixtures/        # Sample daily notes for testing
+    ├── test_summarizer.py # CLI tests via MockProvider
+    └── ...
 ```
 
 ---

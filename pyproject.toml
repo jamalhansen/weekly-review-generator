@@ -1,7 +1,7 @@
 [project]
 name = "weekly-review-generator"
 version = "0.1.0"
-description = "Add your description here"
+description = "Synthesize weekly Obsidian notes, voice memos, and saved content into a weekly review"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

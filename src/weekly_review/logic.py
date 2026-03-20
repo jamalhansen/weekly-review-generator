@@ -113,10 +113,10 @@ def summarize(
         str,
         typer.Option("--output", "-o", help="Output format: text, json, or markdown"),
     ] = "text",
-    dry_run: Annotated[bool, dry_run_option()] = False,
-    no_llm: Annotated[bool, no_llm_option()] = False,
-    verbose: Annotated[bool, verbose_option()] = False,
-    debug: Annotated[bool, debug_option()] = False,
+    dry_run: bool = dry_run_option(),
+    no_llm: bool = no_llm_option(),
+    verbose: bool = verbose_option(),
+    debug: bool = debug_option(),
     discovery_db: Annotated[
         Optional[str],
         typer.Option(

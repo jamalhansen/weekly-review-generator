@@ -78,7 +78,7 @@ All tools in this series share a common set of CLI flags for model management vi
 | `--provider` | `-p` | `ollama` | LLM provider (`ollama`, `anthropic`, `gemini`, `groq`, `deepseek`). |
 | `--model` | `-m` | provider default | Override the provider's default model. |
 | `--output` | `-o` | `text` | Output format: `text`, `json`, or `markdown`. |
-| `--dry-run` | `-n` | | Print markdown to stdout instead of writing to vault. |
+| `--dry-run -n: Call LLM but do not save results. Print to stdout.
 | `--verbose` | `-v` | | Print info messages and extra context. |
 | `--debug` | `-d` | | Show raw system/user prompts and raw LLM responses. |
 

@@ -9,6 +9,7 @@ import typer
 from local_first_common.providers import PROVIDERS
 from local_first_common.cli import (
     dry_run_option,
+    no_llm_option,
     verbose_option,
     debug_option,
     resolve_provider,
@@ -113,6 +114,7 @@ def summarize(
         typer.Option("--output", "-o", help="Output format: text, json, or markdown"),
     ] = "text",
     dry_run: Annotated[bool, dry_run_option()] = False,
+    no_llm: Annotated[bool, no_llm_option()] = False,
     verbose: Annotated[bool, verbose_option()] = False,
     debug: Annotated[bool, debug_option()] = False,
     discovery_db: Annotated[
@@ -154,10 +156,13 @@ def summarize(
         typer.echo("Error: --days and --month are mutually exclusive.")
         raise typer.Exit(1)
 
+    if no_llm:
+        dry_run = True
+
     target_date = datetime.date.fromisoformat(week) if week else datetime.date.today()
 
     try:
-        llm_provider = resolve_provider(PROVIDERS, provider, model, debug=debug)
+        llm_provider = resolve_provider(PROVIDERS, provider, model, debug=debug, no_llm=no_llm)
     except Exception as e:
         typer.echo(f"Error: {e}")
         raise typer.Exit(1)

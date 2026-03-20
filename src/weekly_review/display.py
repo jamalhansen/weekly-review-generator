@@ -1,7 +1,7 @@
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from schema import WeekReview
+from .schema import WeekReview
 
 def display_week_review(review: WeekReview):
     console = Console()

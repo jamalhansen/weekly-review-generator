@@ -2,7 +2,7 @@ import datetime
 from pathlib import Path
 
 
-from voice_memos import get_voice_memos
+from weekly_review.voice_memos import get_voice_memos
 
 
 def make_memos(tmp_path: Path, files: dict[str, str]) -> Path:

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from discovery import get_kept_items
+from weekly_review.discovery import get_kept_items
 
 
 def make_db(tmp_path: Path, rows: list[dict]) -> str:

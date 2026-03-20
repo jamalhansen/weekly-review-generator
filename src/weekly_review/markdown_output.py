@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from schema import WeekReview
+from .schema import WeekReview
 
 
 def format_review_section(review: WeekReview) -> str:

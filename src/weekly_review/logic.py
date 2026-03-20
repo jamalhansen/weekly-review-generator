@@ -19,13 +19,13 @@ from local_first_common.obsidian import (
     format_notes_for_llm,
     get_week_dates,
 )
-from schema import WeekReview
-from prompts import get_system_prompt, get_user_prompt
-from display import display_week_review
-from markdown_output import format_review_section, write_review_section, format_as_markdown
-from discovery import get_kept_items
-from triage import get_triage_captures
-from voice_memos import get_voice_memos
+from .schema import WeekReview
+from .prompts import get_system_prompt, get_user_prompt
+from .display import display_week_review
+from .markdown_output import format_review_section, write_review_section, format_as_markdown
+from .discovery import get_kept_items
+from .triage import get_triage_captures
+from .voice_memos import get_voice_memos
 
 app = typer.Typer()
 

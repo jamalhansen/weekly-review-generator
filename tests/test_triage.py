@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from triage import get_triage_captures
+from weekly_review.triage import get_triage_captures
 
 
 def make_triage_db(tmp_path: Path, rows: list[dict]) -> str:

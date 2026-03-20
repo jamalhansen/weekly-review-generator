@@ -1,30 +1,29 @@
-import sqlite3
 from datetime import date
-
+from local_first_common.db import get_db_cursor
 
 def get_kept_items(db_path: str, start_date: date, end_date: date) -> list[dict]:
     """Return kept content discovery items for the given date range.
 
-    Queries the content discovery SQLite DB for items with status='kept'
-    whose fetched_at falls within [start_date, end_date] (inclusive).
-    Returns a list of dicts with keys: title, url, summary, tags, score.
+    Queries the content discovery database for items with status='kept'
+    where reviewed_at falls within the target week.
+    Returns a list of dicts with keys: title, url, tags, summary.
+    Returns an empty list if the DB doesn't exist.
     """
     try:
-        conn = sqlite3.connect(db_path)
-        conn.row_factory = sqlite3.Row
-        cur = conn.cursor()
-        cur.execute(
-            """
-            SELECT title, url, summary, tags, score
-            FROM items
-            WHERE status = 'kept'
-              AND fetched_at BETWEEN ? AND ?
-            ORDER BY score DESC
-            """,
-            (start_date.isoformat(), end_date.isoformat()),
-        )
-        rows = [dict(row) for row in cur.fetchall()]
-        conn.close()
-        return rows
+        with get_db_cursor(db_path) as cur:
+            if cur is None:
+                return []
+            
+            cur.execute(
+                """
+                SELECT title, url, tags, summary, source
+                FROM items
+                WHERE status = 'kept'
+                  AND date(reviewed_at) BETWEEN ? AND ?
+                ORDER BY reviewed_at
+                """,
+                (start_date.isoformat(), end_date.isoformat()),
+            )
+            return [dict(row) for row in cur.fetchall()]
     except Exception as e:
         raise RuntimeError(f"Failed to query content discovery DB at {db_path}: {e}")

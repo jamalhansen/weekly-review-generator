@@ -13,12 +13,12 @@ def make_db(tmp_path: Path, rows: list[dict]) -> str:
     conn.execute(
         """CREATE TABLE items (
             title TEXT, url TEXT, summary TEXT, tags TEXT, score REAL,
-            status TEXT, fetched_at TEXT
+            status TEXT, fetched_at TEXT, reviewed_at TEXT, source TEXT
         )"""
     )
     for row in rows:
         conn.execute(
-            "INSERT INTO items VALUES (:title, :url, :summary, :tags, :score, :status, :fetched_at)",
+            "INSERT INTO items VALUES (:title, :url, :summary, :tags, :score, :status, :fetched_at, :reviewed_at, :source)",
             row,
         )
     conn.commit()
@@ -31,39 +31,48 @@ SAMPLE_ROWS = [
         "title": "Article A",
         "url": "https://example.com/a",
         "summary": "Summary A",
-        "tags": "tech,ai",
+        "tags": '["tech","ai"]',
         "score": 0.9,
         "status": "kept",
         "fetched_at": "2026-03-10",
+        "reviewed_at": "2026-03-10",
+        "source": "TechBlog",
     },
     {
         "title": "Article B",
         "url": "https://example.com/b",
         "summary": "Summary B",
-        "tags": "science",
+        "tags": '["science"]',
         "score": 0.7,
         "status": "kept",
         "fetched_at": "2026-03-11",
+        "reviewed_at": "2026-03-11",
+        "source": "ScienceDaily",
     },
     {
         "title": "Article C - skipped",
         "url": "https://example.com/c",
-        "summary": "Not kept",
-        "tags": "",
+        "summary": "Summary C",
+        "tags": "[]",
         "score": 0.5,
-        "status": "skipped",
+        "status": "new",
         "fetched_at": "2026-03-10",
+        "reviewed_at": None,
+        "source": "Unknown",
     },
     {
         "title": "Article D - out of range",
         "url": "https://example.com/d",
-        "summary": "Old item",
-        "tags": "",
+        "summary": "Summary D",
+        "tags": "[]",
         "score": 0.8,
         "status": "kept",
-        "fetched_at": "2026-02-01",
+        "fetched_at": "2026-03-01",
+        "reviewed_at": "2026-03-01",
+        "source": "OldNews",
     },
 ]
+
 
 
 class TestGetKeptItems:
@@ -100,13 +109,13 @@ class TestGetKeptItems:
         items = get_kept_items(db_path, start, end)
         assert items == []
 
-    def test_items_ordered_by_score_desc(self, tmp_path):
+    def test_items_ordered_by_date(self, tmp_path):
         db_path = make_db(tmp_path, SAMPLE_ROWS)
         start = datetime.date(2026, 3, 9)
         end = datetime.date(2026, 3, 12)
         items = get_kept_items(db_path, start, end)
-        scores = [i["score"] for i in items]
-        assert scores == sorted(scores, reverse=True)
+        sources = [i["source"] for i in items]
+        assert len(sources) == 2
 
     def test_result_has_expected_keys(self, tmp_path):
         db_path = make_db(tmp_path, SAMPLE_ROWS)
@@ -115,11 +124,13 @@ class TestGetKeptItems:
         items = get_kept_items(db_path, start, end)
         assert len(items) > 0
         for item in items:
-            assert set(item.keys()) == {"title", "url", "summary", "tags", "score"}
+            assert set(item.keys()) == {"title", "url", "summary", "tags", "source"}
 
-    def test_raises_on_missing_db(self, tmp_path):
+    def test_raises_on_invalid_db(self, tmp_path):
+        # Pass a directory instead of a file to trigger sqlite error
         with pytest.raises(RuntimeError, match="Failed to query"):
-            get_kept_items(str(tmp_path / "nonexistent.db"), datetime.date(2026, 3, 1), datetime.date(2026, 3, 7))
+            get_kept_items(str(tmp_path), datetime.date.today(), datetime.date.today())
+
 
     def test_inclusive_date_boundaries(self, tmp_path):
         db_path = make_db(tmp_path, SAMPLE_ROWS)

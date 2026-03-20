@@ -50,6 +50,9 @@ Preview the output without writing to your vault (dry run):
 
 ```bash
 uv run python src/main.py -n
+
+# Skip LLM entirely (for testing CLI args without inference)
+uv run python src/main.py --no-llm
 ```
 
 Summarize the last 10 days:
@@ -78,7 +81,8 @@ All tools in this series share a common set of CLI flags for model management vi
 | `--provider` | `-p` | `ollama` | LLM provider (`ollama`, `anthropic`, `gemini`, `groq`, `deepseek`). |
 | `--model` | `-m` | provider default | Override the provider's default model. |
 | `--output` | `-o` | `text` | Output format: `text`, `json`, or `markdown`. |
-| `--dry-run -n: Call LLM but do not save results. Print to stdout.
+| `--dry-run` | `-n` | false | Call LLM but do not save results to disk/vault/DB. Print to stdout. |
+| `--no-llm` | | false | Skip LLM call, use mock response. Implies `--dry-run`. |
 | `--verbose` | `-v` | | Print info messages and extra context. |
 | `--debug` | `-d` | | Show raw system/user prompts and raw LLM responses. |
 

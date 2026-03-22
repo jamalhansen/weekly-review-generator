@@ -14,7 +14,7 @@ from local_first_common.cli import (
     debug_option,
     resolve_provider,
 )
-from local_first_common.tracking import timed_run
+from local_first_common.tracking import register_tool, timed_run
 from local_first_common.obsidian import (
     find_vault_root,
     load_daily_notes_for_week,
@@ -28,6 +28,8 @@ from .markdown_output import format_review_section, write_review_section, format
 from .discovery import get_kept_items
 from .triage import get_triage_captures
 from .voice_memos import get_voice_memos
+
+_TOOL = register_tool("weekly-review-generator")
 
 app = typer.Typer()
 

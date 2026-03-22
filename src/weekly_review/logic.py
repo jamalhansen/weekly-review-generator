@@ -202,6 +202,8 @@ def summarize(
             response_data = llm_provider.complete(system=system, user=user, response_model=WeekReview)
             review = process_llm_response(response_data, period_start, word_count)
             run.item_count = processed
+            run.input_tokens = getattr(llm_provider, "input_tokens", None) or None
+            run.output_tokens = getattr(llm_provider, "output_tokens", None) or None
     except Exception as e:
         typer.echo(f"Error during LLM processing: {e}")
         raise typer.Exit(1)

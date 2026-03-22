@@ -1,7 +1,39 @@
+import datetime
+import re
 from pathlib import Path
 from typing import Optional
 
 from .schema import WeekReview
+
+
+def _generate_weekly_frontmatter(file_path: Path) -> Optional[str]:
+    """Generate correct YAML frontmatter for a weekly note from its filename.
+
+    Returns None if the filename doesn't match the YYYY-WNN pattern (e.g. monthly notes),
+    so the caller can fall back to the Obsidian template or a plain default.
+    """
+    match = re.match(r"(\d{4})-W(\d{2})$", file_path.stem)
+    if not match:
+        return None
+
+    year, week = int(match.group(1)), int(match.group(2))
+    monday = datetime.date.fromisocalendar(year, week, 1)
+    prev = monday - datetime.timedelta(weeks=1)
+    nxt = monday + datetime.timedelta(weeks=1)
+    prev_y, prev_w, _ = prev.isocalendar()
+    next_y, next_w, _ = nxt.isocalendar()
+    month_str = monday.strftime("%Y-%m")
+
+    return (
+        f"---\n"
+        f'Week: "{year}-W{week:02d}"\n'
+        f'Month: "[[{month_str}]]"\n'
+        f'Previous: "[[{prev_y}-W{prev_w:02d}]]"\n'
+        f'Next: "[[{next_y}-W{next_w:02d}]]"\n'
+        f'Category: "[[Weekly Note]]"\n'
+        f"---\n\n"
+        f"## Intention\n1. \n2. \n3. \n\n## Review\n\n"
+    )
 
 
 def format_review_section(review: WeekReview) -> str:
@@ -56,10 +88,16 @@ def write_review_section(
     other sections (e.g. ## Intention).
     """
     if not file_path.exists():
-        if template_path and template_path.exists():
-            base = template_path.read_text()
-        else:
-            base = "## Intention\n1. \n2. \n3. \n\n## Review\n\n"
+        # Generate proper frontmatter for weekly notes (YYYY-WNN).
+        # The Obsidian template uses Templater syntax that Python can't evaluate,
+        # so we compute the correct values directly from the filename instead.
+        base = _generate_weekly_frontmatter(file_path)
+        if base is None:
+            # Non-weekly file (e.g. monthly): fall back to template or plain default
+            if template_path and template_path.exists():
+                base = template_path.read_text()
+            else:
+                base = "## Intention\n1. \n2. \n3. \n\n## Review\n\n"
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(base)
 

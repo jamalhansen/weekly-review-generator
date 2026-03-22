@@ -14,6 +14,7 @@ from local_first_common.cli import (
     debug_option,
     resolve_provider,
 )
+from local_first_common.tracking import timed_run
 from local_first_common.obsidian import (
     find_vault_root,
     load_daily_notes_for_week,
@@ -197,8 +198,10 @@ def summarize(
     )
     
     try:
-        response_data = llm_provider.complete(system=system, user=user, response_model=WeekReview)
-        review = process_llm_response(response_data, period_start, word_count)
+        with timed_run("weekly-review-generator", llm_provider.model, source_location=period_start) as run:
+            response_data = llm_provider.complete(system=system, user=user, response_model=WeekReview)
+            review = process_llm_response(response_data, period_start, word_count)
+            run.item_count = processed
     except Exception as e:
         typer.echo(f"Error during LLM processing: {e}")
         raise typer.Exit(1)

@@ -13,6 +13,7 @@ from local_first_common.cli import (
     verbose_option,
     debug_option,
     resolve_provider,
+    resolve_dry_run,
 )
 from local_first_common.tracking import register_tool, timed_run
 from local_first_common.obsidian import (
@@ -82,9 +83,7 @@ def get_output_filename(
 
 def process_llm_response(response_data: dict, period_start: str, word_count: int) -> WeekReview:
     """Post-process and validate LLM response data."""
-    if not isinstance(response_data, dict):
-        raise ValueError("Unexpected response format from LLM.")
-
+    # response_data is already a dict from llm.complete
     response_data["week_of"] = period_start
     response_data["word_count_input"] = word_count
 
@@ -159,8 +158,7 @@ def summarize(
         typer.echo("Error: --days and --month are mutually exclusive.")
         raise typer.Exit(1)
 
-    if no_llm:
-        dry_run = True
+    dry_run = resolve_dry_run(dry_run, no_llm)
 
     target_date = datetime.date.fromisoformat(week) if week else datetime.date.today()
 

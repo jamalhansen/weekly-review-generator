@@ -14,6 +14,16 @@ dependencies = [
     "typer>=0.24.1",
 ]
 
+[project.scripts]
+weekly-review = "weekly_review.logic:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/weekly_review"]
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",

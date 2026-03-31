@@ -5,9 +5,7 @@ description = "Synthesize weekly Obsidian notes, voice memos, and saved content 
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "anthropic>=0.84.0",
-    "google-genai>=1.65.0",
-    "local-first-common",
+    "local-first-common[anthropic,gemini]",
     "pydantic>=2.12.5",
     "python-frontmatter>=1.1.0",
     "rich>=14.3.3",

@@ -214,3 +214,9 @@ FINDINGS.md
 
 # local-first security requirements
 .DS_Store
+
+# Workspace standard ignores
+*.pyc
+*.pyd
+*.pyo
+.venv/

@@ -34,37 +34,39 @@ export DEEPSEEK_API_KEY="your-key"
 
 ### 2. Run the Tool
 
+The tool is available as `weekly-review` after `uv sync`.
+
 Summarize the current week (Monday to Sunday):
 
 ```bash
-uv run python src/main.py
+uv run weekly-review
 ```
 
 Summarize a specific week:
 
 ```bash
-uv run python src/main.py -w 2026-03-02
+uv run weekly-review -w 2026-03-02
 ```
 
 Preview the output without writing to your vault (dry run):
 
 ```bash
-uv run python src/main.py -n
+uv run weekly-review -n
 
 # Skip LLM entirely (for testing CLI args without inference)
-uv run python src/main.py --no-llm
+uv run weekly-review --no-llm
 ```
 
 Summarize the last 10 days:
 
 ```bash
-uv run python src/main.py --days 10
+uv run weekly-review --days 10
 ```
 
 Summarize the full current month:
 
 ```bash
-uv run python src/main.py --month
+uv run weekly-review --month
 ```
 
 ---

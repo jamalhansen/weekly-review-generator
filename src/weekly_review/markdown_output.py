@@ -66,10 +66,10 @@ def format_review_section(review: WeekReview) -> str:
             lines.append(f"- {link}")
         lines.append("")
 
-    if review.open_threads:
-        lines.append("### Open Threads")
-        for thread in review.open_threads:
-            lines.append(f"- [ ] {thread}")
+    if review.suggested_intentions:
+        lines.append("### Intentions for Next Week")
+        for intention in review.suggested_intentions:
+            lines.append(f"- {intention}")
         lines.append("")
 
     lines.append(f"_Generated from {review.word_count_input} words of input._")
@@ -146,11 +146,10 @@ def format_as_markdown(review: WeekReview) -> str:
             lines.append(f"- {link}")
         lines.append("")
 
-    if review.open_threads:
-        lines.append("## Open Threads")
-        for thread in review.open_threads:
-            # Format as an Obsidian task
-            lines.append(f"- [ ] {thread}")
+    if review.suggested_intentions:
+        lines.append("## Intentions for Next Week")
+        for intention in review.suggested_intentions:
+            lines.append(f"- {intention}")
         lines.append("")
 
     lines.append("---")

@@ -18,5 +18,5 @@ class WeekReview(BaseModel):
     )
     highlights: Optional[List[WeeklyHighlight]] = Field(default_factory=list)
     links_saved: Optional[List[str]] = Field(default_factory=list, description="URLs found in the notes")
-    open_threads: Optional[List[str]] = Field(default_factory=list, description="Unresolved items, incomplete tasks, or loose thoughts")
+    suggested_intentions: Optional[List[str]] = Field(default_factory=list, description="3 suggested intentions for the coming week")
     word_count_input: int = Field(..., description="Total words fed to the model")

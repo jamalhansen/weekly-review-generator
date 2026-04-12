@@ -32,10 +32,11 @@ class TestFormatAsMarkdown:
         md = format_as_markdown(review)
         assert "https://example.com" in md
 
-    def test_open_threads_formatted_as_tasks(self):
-        review = self._make_review(open_threads=["Write tests"])
+    def test_intentions_formatted_as_tasks(self):
+        review = self._make_review(suggested_intentions=["Write tests"])
         md = format_as_markdown(review)
-        assert "- [ ] Write tests" in md
+        assert "- Write tests" in md
+        assert "Intentions for Next Week" in md
 
     def test_word_count_in_output(self):
         review = self._make_review(word_count_input=999)
@@ -62,10 +63,11 @@ class TestFormatReviewSection:
         assert "### Highlights" in section
         assert "**Work**" in section
 
-    def test_open_threads_formatted_as_tasks(self):
-        review = self._make_review(open_threads=["Follow up on PR"])
+    def test_intentions_formatted_as_tasks(self):
+        review = self._make_review(suggested_intentions=["Follow up on PR"])
         section = format_review_section(review)
-        assert "- [ ] Follow up on PR" in section
+        assert "- Follow up on PR" in section
+        assert "Intentions for Next Week" in section
 
     def test_links_saved_included(self):
         review = self._make_review(links_saved=["https://example.com"])

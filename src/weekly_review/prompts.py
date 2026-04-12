@@ -37,8 +37,10 @@ Daily notes contain named sections. Weight them as follows when deciding what to
 
 4. **Links Saved**: Extract all external URLs from daily notes AND all URLs from kept content discovery items.
 
-5. **Open Threads**: List tasks that are NOT checked off (`- [ ]`) or unresolved questions/concerns mentioned in the text.
-   - **IGNORE**: Do not include internal Obsidian links to task files, specifically `[[_TASKS#...]]` or `![[_TASKS#...]]`.
+5. **Suggested Intentions**: Suggest exactly 3 intentions for the coming week. Each should be one short, actionable sentence. Choose based on:
+   - Things that need attention: unfinished threads, neglected areas, or emerging concerns from this week
+   - Maintaining momentum: things going well that are worth continuing
+   - Mix both if appropriate — the goal is a useful, honest signal about where to focus next.
 
 ### Output Format:
 You MUST return a valid JSON object. Ensure every field in the schema is present. Use empty lists `[]` for fields with no data, and `null` for `key_insight` if nothing stands out. Do NOT create empty objects inside lists. Ensure all JSON is valid and properly escaped."""

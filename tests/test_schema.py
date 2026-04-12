@@ -26,7 +26,7 @@ class TestWeekReview:
         assert review.headline == "Weekly Summary"
         assert review.highlights == []
         assert review.links_saved == []
-        assert review.open_threads == []
+        assert review.suggested_intentions == []
 
     def test_missing_required_fields_raises(self):
         with pytest.raises(ValidationError):
@@ -38,7 +38,7 @@ class TestWeekReview:
             headline="A productive week",
             highlights=[WeeklyHighlight(category="Work", summary="Built things")],
             links_saved=["https://example.com"],
-            open_threads=["Finish API doc"],
+            suggested_intentions=["Finish API doc"],
             word_count_input=1234,
         )
         assert len(review.highlights) == 1

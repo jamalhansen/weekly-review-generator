@@ -32,9 +32,9 @@ def display_week_review(review: WeekReview):
         for link in review.links_saved:
             console.print(f"[underline]{link}[/underline]")
 
-    if review.open_threads:
-        console.print("\n[bold red]Open Threads[/bold red]")
-        for thread in review.open_threads:
-            console.print(f"  {thread}")
+    if review.suggested_intentions:
+        console.print("\n[bold green]Intentions for Next Week[/bold green]")
+        for intention in review.suggested_intentions:
+            console.print(f"  • {intention}")
 
     console.print(f"\n[dim]Input: {review.word_count_input} words[/dim]\n")

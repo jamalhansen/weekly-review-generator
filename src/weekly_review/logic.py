@@ -1,5 +1,7 @@
 import calendar
+import os
 import datetime
+import logging
 import re
 from pathlib import Path
 from typing import Annotated, Optional
@@ -9,16 +11,17 @@ import typer
 from local_first_common.providers import PROVIDERS
 from local_first_common.cli import (
     init_config_option,
-    init_config_option,
     dry_run_option,
     no_llm_option,
     verbose_option,
     debug_option,
     resolve_provider,
     resolve_dry_run,
+    provider_option,
+    model_option,
 )
-from local_first_common.config import get_setting
 from local_first_common.tracking import register_tool, timed_run
+from local_first_common.logging import setup_logging
 from local_first_common.obsidian import (
     find_vault_root,
     load_daily_notes_for_week,
@@ -28,7 +31,11 @@ from local_first_common.obsidian import (
 from .schema import WeekReview
 from .prompts import get_system_prompt, get_user_prompt
 from .display import display_week_review
-from .markdown_output import format_review_section, write_review_section, format_as_markdown
+from .markdown_output import (
+    format_review_section,
+    write_review_section,
+    format_as_markdown,
+)
 from .discovery import get_kept_items
 from .triage import get_triage_captures
 from .voice_memos import get_voice_memos
@@ -39,6 +46,20 @@ DEFAULTS = {"provider": "ollama", "model": "llama3"}
 
 
 app = typer.Typer()
+
+
+def _setup_tool_logging(verbose: bool, debug: bool) -> None:
+    level = logging.DEBUG if (verbose or debug) else logging.WARNING
+    try:
+        setup_logging(
+            level=level,
+            tool_name=TOOL_NAME,
+            persist_warnings=True,
+        )
+    except TypeError:
+        # Backward compatibility with older local-first-common logging signature.
+        setup_logging(level=level)
+
 
 def strip_obsidian_callouts(text: str) -> str:
     """Convert Obsidian callout blocks to plain prose for LLM consumption."""
@@ -87,7 +108,9 @@ def get_output_filename(
     return f"{iso_year}-W{iso_week:02d}.md"
 
 
-def process_llm_response(response_data: dict, period_start: str, word_count: int) -> WeekReview:
+def process_llm_response(
+    response_data: dict, period_start: str, word_count: int
+) -> WeekReview:
     """Post-process and validate LLM response data."""
     # response_data is already a dict from llm.complete
     response_data["week_of"] = period_start
@@ -99,7 +122,11 @@ def process_llm_response(response_data: dict, period_start: str, word_count: int
         for h in raw_highlights:
             cat = h.get("category", "Other")
             if cat not in grouped:
-                grouped[cat] = {"category": cat, "summary": h.get("summary", ""), "items": h.get("items", []) or []}
+                grouped[cat] = {
+                    "category": cat,
+                    "summary": h.get("summary", ""),
+                    "items": h.get("items", []) or [],
+                }
             else:
                 if h.get("summary"):
                     grouped[cat]["summary"] += " " + h["summary"]
@@ -109,57 +136,56 @@ def process_llm_response(response_data: dict, period_start: str, word_count: int
 
     return WeekReview(**response_data)
 
+
 @app.command()
 def summarize(
-    week: Annotated[
-        Optional[str],
-        typer.Option("--week", "-w", help="ISO date in target period (default: today)"),
-    ] = None,
-    provider: Annotated[str, typer.Option("--provider", "-p", help="LLM provider.")] = "ollama",
-    model: Annotated[Optional[str], typer.Option("--model", "-m", help="Model name.")] = None,
+    week: Optional[str] = typer.Option(
+        None, "--week", "-w", help="ISO date in target period (default: today)"
+    ),
+    provider: Annotated[str, provider_option()] = os.environ.get(
+        "MODEL_PROVIDER", "ollama"
+    ),
+    model: Annotated[Optional[str], model_option()] = None,
     output: Annotated[
         str,
         typer.Option("--output", "-o", help="Output format: text, json, or markdown"),
     ] = "text",
-    dry_run: bool = dry_run_option(),
-    no_llm: bool = no_llm_option(),
-    verbose: bool = verbose_option(),
-    debug: bool = debug_option(),
-    init_config: bool = init_config_option(TOOL_NAME, DEFAULTS),
-    discovery_db: Annotated[
-        Optional[str],
-        typer.Option(
-            "--discovery-db",
-            help="Path to content discovery SQLite DB.",
-            envvar="CONTENT_DISCOVERY_DB_PATH",
-        ),
-    ] = None,
-    voice_memos_dir: Annotated[
-        Optional[str],
-        typer.Option(
-            "--voice-memos-dir",
-            help="Directory containing processed voice memo transcriptions.",
-            envvar="VOICE_MEMOS_DIR",
-        ),
-    ] = None,
-    days: Annotated[
-        Optional[int],
-        typer.Option("--days", help="Review the last N days instead of the current calendar week."),
-    ] = None,
-    month: Annotated[
-        bool,
-        typer.Option("--month", help="Review the full calendar month containing the target date."),
-    ] = False,
-    triage_db: Annotated[
-        Optional[str],
-        typer.Option(
-            "--triage-db",
-            help="Path to thread-triage SQLite DB. Defaults to ~/sync/thread-triage/thread-triage.db.",
-            envvar="THREAD_TRIAGE_DB_PATH",
-        ),
-    ] = str(Path("~/sync/thread-triage/thread-triage.db").expanduser()),
+    dry_run: Annotated[bool, dry_run_option()] = False,
+    no_llm: Annotated[bool, no_llm_option()] = False,
+    verbose: Annotated[bool, verbose_option()] = False,
+    debug: Annotated[bool, debug_option()] = False,
+    init_config: Annotated[bool, init_config_option(TOOL_NAME, DEFAULTS)] = False,
+    discovery_db: Optional[str] = typer.Option(
+        None,
+        "--discovery-db",
+        help="Path to content discovery SQLite DB.",
+        envvar="CONTENT_DISCOVERY_DB_PATH",
+    ),
+    voice_memos_dir: Optional[str] = typer.Option(
+        None,
+        "--voice-memos-dir",
+        help="Directory containing processed voice memo transcriptions.",
+        envvar="VOICE_MEMOS_DIR",
+    ),
+    days: Optional[int] = typer.Option(
+        None,
+        "--days",
+        help="Review the last N days instead of the current calendar week.",
+    ),
+    month: bool = typer.Option(
+        False,
+        "--month",
+        help="Review the full calendar month containing the target date.",
+    ),
+    triage_db: Optional[str] = typer.Option(
+        str(Path("~/sync/thread-triage/thread-triage.db").expanduser()),
+        "--triage-db",
+        help="Path to thread-triage SQLite DB. Defaults to ~/sync/thread-triage/thread-triage.db.",
+        envvar="THREAD_TRIAGE_DB_PATH",
+    ),
 ):
     """Generate a weekly review from Obsidian daily notes."""
+    _setup_tool_logging(verbose, debug)
 
     if days is not None and month:
         typer.echo("Error: --days and --month are mutually exclusive.")
@@ -170,7 +196,9 @@ def summarize(
     target_date = datetime.date.fromisoformat(week) if week else datetime.date.today()
 
     try:
-        llm_provider = resolve_provider(PROVIDERS, provider, model, debug=debug, no_llm=no_llm)
+        llm_provider = resolve_provider(
+            PROVIDERS, provider, model, debug=debug, no_llm=no_llm
+        )
     except Exception as e:
         typer.echo(f"Error: {e}")
         raise typer.Exit(1)
@@ -184,13 +212,23 @@ def summarize(
     skipped = len(dates) - processed
 
     if not notes:
-        typer.echo(f"No notes found for the period starting {period_start} in {vault_root}")
+        typer.echo(
+            f"No notes found for the period starting {period_start} in {vault_root}"
+        )
         raise typer.Exit(0)
 
     # --- Load optional sources ---
-    discovery_items = get_kept_items(discovery_db, dates[0], dates[-1]) if discovery_db else None
-    voice_memo_texts = get_voice_memos(voice_memos_dir, dates[0], dates[-1]) if voice_memos_dir else None
-    triage_capture_items = get_triage_captures(triage_db, dates[0], dates[-1]) if triage_db else None
+    discovery_items = (
+        get_kept_items(discovery_db, dates[0], dates[-1]) if discovery_db else None
+    )
+    voice_memo_texts = (
+        get_voice_memos(voice_memos_dir, dates[0], dates[-1])
+        if voice_memos_dir
+        else None
+    )
+    triage_capture_items = (
+        get_triage_captures(triage_db, dates[0], dates[-1]) if triage_db else None
+    )
 
     notes_text = strip_obsidian_callouts(format_notes_for_llm(notes))
     word_count = get_word_count(notes_text)
@@ -203,10 +241,14 @@ def summarize(
         voice_memos=voice_memo_texts,
         triage_captures=triage_capture_items,
     )
-    
+
     try:
-        with timed_run("weekly-review-generator", llm_provider.model, source_location=period_start) as run:
-            response_data = llm_provider.complete(system=system, user=user, response_model=WeekReview)
+        with timed_run(
+            "weekly-review-generator", llm_provider.model, source_location=period_start
+        ) as run:
+            response_data = llm_provider.complete(
+                system=system, user=user, response_model=WeekReview
+            )
             review = process_llm_response(response_data, period_start, word_count)
             run.item_count = processed
             run.input_tokens = getattr(llm_provider, "input_tokens", None) or None

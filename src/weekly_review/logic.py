@@ -8,6 +8,8 @@ import typer
 
 from local_first_common.providers import PROVIDERS
 from local_first_common.cli import (
+    init_config_option,
+    init_config_option,
     dry_run_option,
     no_llm_option,
     verbose_option,
@@ -15,6 +17,7 @@ from local_first_common.cli import (
     resolve_provider,
     resolve_dry_run,
 )
+from local_first_common.config import get_setting
 from local_first_common.tracking import register_tool, timed_run
 from local_first_common.obsidian import (
     find_vault_root,
@@ -31,6 +34,9 @@ from .triage import get_triage_captures
 from .voice_memos import get_voice_memos
 
 _TOOL = register_tool("weekly-review-generator")
+TOOL_NAME = "weekly-review-generator"
+DEFAULTS = {"provider": "ollama", "model": "llama3"}
+
 
 app = typer.Typer()
 
@@ -119,6 +125,7 @@ def summarize(
     no_llm: bool = no_llm_option(),
     verbose: bool = verbose_option(),
     debug: bool = debug_option(),
+    init_config: bool = init_config_option(TOOL_NAME, DEFAULTS),
     discovery_db: Annotated[
         Optional[str],
         typer.Option(

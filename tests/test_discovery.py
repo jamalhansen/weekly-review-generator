@@ -4,7 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from weekly_review.discovery import get_kept_items
+from weekly_review.discovery import get_kept_items, DiscoveryDBError
+
+
+class TestTypedErrors:
+    def test_discovery_db_error_is_exception(self):
+        err = DiscoveryDBError("db gone")
+        assert "db gone" in str(err)
+        assert isinstance(err, Exception)
 
 
 def make_db(tmp_path: Path, rows: list[dict]) -> str:
@@ -74,7 +81,6 @@ SAMPLE_ROWS = [
 ]
 
 
-
 class TestGetKeptItems:
     def test_returns_kept_items_in_range(self, tmp_path):
         db_path = make_db(tmp_path, SAMPLE_ROWS)
@@ -128,13 +134,14 @@ class TestGetKeptItems:
 
     def test_raises_on_invalid_db(self, tmp_path):
         # Pass a directory instead of a file to trigger sqlite error
-        with pytest.raises(RuntimeError, match="Failed to query"):
+        with pytest.raises(DiscoveryDBError, match="Failed to query"):
             get_kept_items(str(tmp_path), datetime.date.today(), datetime.date.today())
-
 
     def test_inclusive_date_boundaries(self, tmp_path):
         db_path = make_db(tmp_path, SAMPLE_ROWS)
         # Both boundary dates should be included
-        items_start = get_kept_items(db_path, datetime.date(2026, 3, 10), datetime.date(2026, 3, 10))
+        items_start = get_kept_items(
+            db_path, datetime.date(2026, 3, 10), datetime.date(2026, 3, 10)
+        )
         assert len(items_start) == 1
         assert items_start[0]["title"] == "Article A"

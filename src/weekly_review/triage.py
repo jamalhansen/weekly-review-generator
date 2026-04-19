@@ -1,6 +1,11 @@
 from datetime import date
 from local_first_common.db import get_db_cursor
 
+
+class TriageDBError(Exception):
+    """Raised when a triage DB query fails."""
+
+
 def get_triage_captures(db_path: str, start_date: date, end_date: date) -> list[dict]:
     """Return executed capture threads from the triage DB for the given date range.
 
@@ -13,7 +18,7 @@ def get_triage_captures(db_path: str, start_date: date, end_date: date) -> list[
         with get_db_cursor(db_path) as cur:
             if cur is None:
                 return []
-            
+
             cur.execute(
                 """
                 SELECT thread_text, suggested_action
@@ -25,5 +30,7 @@ def get_triage_captures(db_path: str, start_date: date, end_date: date) -> list[
                 (start_date.isoformat(), end_date.isoformat()),
             )
             return [dict(row) for row in cur.fetchall()]
+    except TriageDBError:
+        raise
     except Exception as e:
-        raise RuntimeError(f"Failed to query triage DB at {db_path}: {e}")
+        raise TriageDBError(f"Failed to query triage DB at {db_path}: {e}") from e

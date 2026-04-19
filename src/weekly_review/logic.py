@@ -45,6 +45,18 @@ TOOL_NAME = "weekly-review-generator"
 DEFAULTS = {"provider": "ollama", "model": "llama3"}
 
 
+class WeeklyReviewError(Exception):
+    """Base typed error for weekly-review-generator."""
+
+
+class ProviderSetupError(WeeklyReviewError):
+    """Raised when provider resolution fails."""
+
+
+class LLMRunError(WeeklyReviewError):
+    """Raised when the LLM review generation call fails."""
+
+
 app = typer.Typer()
 
 
@@ -199,6 +211,9 @@ def summarize(
         llm_provider = resolve_provider(
             PROVIDERS, provider, model, debug=debug, no_llm=no_llm
         )
+    except ProviderSetupError as e:
+        typer.echo(f"Error: {e}")
+        raise typer.Exit(1)
     except Exception as e:
         typer.echo(f"Error: {e}")
         raise typer.Exit(1)
@@ -253,6 +268,9 @@ def summarize(
             run.item_count = processed
             run.input_tokens = getattr(llm_provider, "input_tokens", None) or None
             run.output_tokens = getattr(llm_provider, "output_tokens", None) or None
+    except LLMRunError as e:
+        typer.echo(f"Error during LLM processing: {e}")
+        raise typer.Exit(1)
     except Exception as e:
         typer.echo(f"Error during LLM processing: {e}")
         raise typer.Exit(1)

@@ -4,7 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from weekly_review.triage import get_triage_captures
+from weekly_review.triage import get_triage_captures, TriageDBError
+
+
+class TestTypedErrors:
+    def test_triage_db_error_is_exception(self):
+        err = TriageDBError("connection refused")
+        assert "connection refused" in str(err)
+        assert isinstance(err, Exception)
 
 
 def make_triage_db(tmp_path: Path, rows: list[dict]) -> str:
@@ -121,22 +128,32 @@ class TestGetTriageCaptures:
 
     def test_result_has_expected_keys(self, tmp_path):
         db_path = make_triage_db(tmp_path, SAMPLE_ROWS)
-        items = get_triage_captures(db_path, datetime.date(2026, 3, 9), datetime.date(2026, 3, 14))
+        items = get_triage_captures(
+            db_path, datetime.date(2026, 3, 9), datetime.date(2026, 3, 14)
+        )
         assert len(items) > 0
         for item in items:
             assert set(item.keys()) == {"thread_text", "suggested_action"}
 
     def test_returns_empty_list_when_db_missing(self, tmp_path):
-        result = get_triage_captures(str(tmp_path / "nonexistent.db"), datetime.date(2026, 3, 9), datetime.date(2026, 3, 14))
+        result = get_triage_captures(
+            str(tmp_path / "nonexistent.db"),
+            datetime.date(2026, 3, 9),
+            datetime.date(2026, 3, 14),
+        )
         assert result == []
 
     def test_returns_empty_list_when_no_matches(self, tmp_path):
         db_path = make_triage_db(tmp_path, SAMPLE_ROWS)
-        result = get_triage_captures(db_path, datetime.date(2025, 1, 1), datetime.date(2025, 1, 7))
+        result = get_triage_captures(
+            db_path, datetime.date(2025, 1, 1), datetime.date(2025, 1, 7)
+        )
         assert result == []
 
     def test_raises_on_bad_db(self, tmp_path):
         bad_db = tmp_path / "bad.db"
         bad_db.write_text("not a sqlite file")
-        with pytest.raises(RuntimeError, match="Failed to query"):
-            get_triage_captures(str(bad_db), datetime.date(2026, 3, 9), datetime.date(2026, 3, 14))
+        with pytest.raises(TriageDBError, match="Failed to query"):
+            get_triage_captures(
+                str(bad_db), datetime.date(2026, 3, 9), datetime.date(2026, 3, 14)
+            )

@@ -1,6 +1,11 @@
 from datetime import date
 from local_first_common.db import get_db_cursor
 
+
+class DiscoveryDBError(Exception):
+    """Raised when a content discovery DB query fails."""
+
+
 def get_kept_items(db_path: str, start_date: date, end_date: date) -> list[dict]:
     """Return kept content discovery items for the given date range.
 
@@ -13,7 +18,7 @@ def get_kept_items(db_path: str, start_date: date, end_date: date) -> list[dict]
         with get_db_cursor(db_path) as cur:
             if cur is None:
                 return []
-            
+
             cur.execute(
                 """
                 SELECT title, url, tags, summary, source
@@ -25,5 +30,9 @@ def get_kept_items(db_path: str, start_date: date, end_date: date) -> list[dict]
                 (start_date.isoformat(), end_date.isoformat()),
             )
             return [dict(row) for row in cur.fetchall()]
+    except DiscoveryDBError:
+        raise
     except Exception as e:
-        raise RuntimeError(f"Failed to query content discovery DB at {db_path}: {e}")
+        raise DiscoveryDBError(
+            f"Failed to query content discovery DB at {db_path}: {e}"
+        ) from e

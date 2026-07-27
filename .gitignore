@@ -221,3 +221,4 @@ FINDINGS.md
 *.pyd
 *.pyo
 .venv/
+_NOTES.md

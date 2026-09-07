@@ -121,10 +121,11 @@ def get_output_filename(
 
 
 def process_llm_response(
-    response_data: dict, period_start: str, word_count: int
+    response_data, period_start: str, word_count: int
 ) -> WeekReview:
     """Post-process and validate LLM response data."""
-    # response_data is already a dict from llm.complete
+    if hasattr(response_data, "model_dump"):
+        response_data = response_data.model_dump()
     response_data["week_of"] = period_start
     response_data["word_count_input"] = word_count
 

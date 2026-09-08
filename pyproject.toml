@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-weekly-review = "weekly_review.logic:app"
+weekly-review = "weekly_review.cli:app"
 
 [build-system]
 requires = ["hatchling"]

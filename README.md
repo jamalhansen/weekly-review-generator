@@ -99,8 +99,8 @@ This tool follows the [Local-First AI project blueprint](https://github.com/jama
 ```
 weekly-review-generator/
 ├── src/
-│   ├── main.py          # Typer CLI entry point
-│   ├── logic.py         # Core review orchestration
+│   ├── cli.py           # Typer CLI entry point
+│   ├── core.py          # Core review orchestration
 │   ├── discovery.py     # Content discovery DB reader
 │   ├── voice_memos.py   # Voice memo transcription reader
 │   ├── schema.py        # Pydantic models (WeekReview, WeeklyHighlight)

@@ -1,10 +1,10 @@
-import sqlite3
 import datetime
+import sqlite3
 from pathlib import Path
 
 import pytest
 
-from weekly_review.discovery import get_kept_items, DiscoveryDBError
+from weekly_review.discovery import DiscoveryDBError, get_kept_items
 
 
 class TestTypedErrors:
@@ -135,7 +135,8 @@ class TestGetKeptItems:
     def test_raises_on_invalid_db(self, tmp_path):
         # Pass a directory instead of a file to trigger sqlite error
         with pytest.raises(DiscoveryDBError, match="Failed to query"):
-            get_kept_items(str(tmp_path), datetime.date.today(), datetime.date.today())
+            arbitrary_date = datetime.date(2026, 1, 1)
+            get_kept_items(str(tmp_path), arbitrary_date, arbitrary_date)
 
     def test_inclusive_date_boundaries(self, tmp_path):
         db_path = make_db(tmp_path, SAMPLE_ROWS)

@@ -1,12 +1,11 @@
 import datetime
 import re
 from pathlib import Path
-from typing import Optional
 
 from .schema import WeekReview
 
 
-def _generate_weekly_frontmatter(file_path: Path) -> Optional[str]:
+def _generate_weekly_frontmatter(file_path: Path) -> str | None:
     """Generate correct YAML frontmatter for a weekly note from its filename.
 
     Returns None if the filename doesn't match the YYYY-WNN pattern (e.g. monthly notes),
@@ -79,7 +78,7 @@ def format_review_section(review: WeekReview) -> str:
 def write_review_section(
     file_path: Path,
     review_content: str,
-    template_path: Optional[Path] = None,
+    template_path: Path | None = None,
 ) -> None:
     """Write review_content into the ## Review section of file_path.
 

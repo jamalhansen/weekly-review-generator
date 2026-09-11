@@ -1,7 +1,11 @@
 
 
-from weekly_review.schema import WeekReview, WeeklyHighlight
-from weekly_review.markdown_output import format_as_markdown, format_review_section, write_review_section
+from weekly_review.markdown_output import (
+    format_as_markdown,
+    format_review_section,
+    write_review_section,
+)
+from weekly_review.schema import WeeklyHighlight, WeekReview
 
 
 class TestFormatAsMarkdown:

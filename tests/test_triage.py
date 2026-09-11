@@ -1,10 +1,10 @@
-import sqlite3
 import datetime
+import sqlite3
 from pathlib import Path
 
 import pytest
 
-from weekly_review.triage import get_triage_captures, TriageDBError
+from weekly_review.triage import TriageDBError, get_triage_captures
 
 
 class TestTypedErrors:

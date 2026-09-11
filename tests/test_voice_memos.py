@@ -1,7 +1,6 @@
 import datetime
 from pathlib import Path
 
-
 from weekly_review.voice_memos import get_voice_memos
 
 

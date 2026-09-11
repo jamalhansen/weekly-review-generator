@@ -1,11 +1,12 @@
-import json
 import datetime
+import json
 from pathlib import Path
 from unittest.mock import patch
+
+from local_first_common.testing import MockProvider
 from typer.testing import CliRunner
 
 from weekly_review.cli import app
-from local_first_common.testing import MockProvider
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

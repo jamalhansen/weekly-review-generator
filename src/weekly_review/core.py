@@ -1,9 +1,9 @@
 import calendar
 import datetime
 import re
-from typing import Optional
 
 from local_first_common.obsidian import get_week_dates
+
 from .schema import WeekReview
 
 
@@ -37,7 +37,7 @@ def get_word_count(text: str) -> int:
 
 def get_date_range(
     target_date: datetime.date,
-    days: Optional[int] = None,
+    days: int | None = None,
     month: bool = False,
 ) -> list[datetime.date]:
     """Return the list of dates for the review period."""
@@ -55,7 +55,7 @@ def get_date_range(
 def get_output_filename(
     target_date: datetime.date,
     dates: list[datetime.date],
-    days: Optional[int],
+    days: int | None,
     month: bool,
 ) -> str:
     if month:

@@ -1,4 +1,5 @@
 from datetime import date
+
 from local_first_common.db import get_db_cursor
 
 

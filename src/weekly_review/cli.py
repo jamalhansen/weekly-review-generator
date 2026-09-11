@@ -2,49 +2,49 @@ import datetime
 import logging
 import os
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
-
-from local_first_common.providers import PROVIDERS
 from local_first_common.cli import (
-    init_config_option,
-    dry_run_option,
-    no_llm_option,
-    verbose_option,
     debug_option,
-    resolve_provider,
-    resolve_dry_run,
-    provider_option,
+    dry_run_option,
+    init_config_option,
     model_option,
+    no_llm_option,
+    provider_option,
+    resolve_dry_run,
+    resolve_provider,
+    verbose_option,
 )
-from local_first_common.tracking import register_tool, timed_run
 from local_first_common.logging import setup_logging
 from local_first_common.obsidian import (
     find_vault_root,
-    load_daily_notes_for_week,
     format_notes_for_llm,
+    load_daily_notes_for_week,
 )
-from .schema import WeekReview
-from .prompts import get_system_prompt, get_user_prompt
-from .display import display_week_review
-from .markdown_output import (
-    format_review_section,
-    write_review_section,
-    format_as_markdown,
-)
-from .discovery import get_kept_items
-from .triage import get_triage_captures
-from .voice_memos import get_voice_memos
+from local_first_common.providers import PROVIDERS
+from local_first_common.tracking import register_tool, timed_run
+
 from .core import (
-    ProviderSetupError,
     LLMRunError,
-    strip_obsidian_callouts,
-    get_word_count,
+    ProviderSetupError,
     get_date_range,
     get_output_filename,
+    get_word_count,
     process_llm_response,
+    strip_obsidian_callouts,
 )
+from .discovery import get_kept_items
+from .display import display_week_review
+from .markdown_output import (
+    format_as_markdown,
+    format_review_section,
+    write_review_section,
+)
+from .prompts import get_system_prompt, get_user_prompt
+from .schema import WeekReview
+from .triage import get_triage_captures
+from .voice_memos import get_voice_memos
 
 _TOOL = register_tool("weekly-review-generator")
 TOOL_NAME = "weekly-review-generator"
@@ -68,13 +68,13 @@ def _setup_tool_logging(verbose: bool, debug: bool) -> None:
 
 @app.command()
 def summarize(
-    week: Optional[str] = typer.Option(
+    week: str | None = typer.Option(
         None, "--week", "-w", help="ISO date in target period (default: today)"
     ),
     provider: Annotated[str, provider_option()] = os.environ.get(
         "MODEL_PROVIDER", "ollama"
     ),
-    model: Annotated[Optional[str], model_option()] = None,
+    model: Annotated[str | None, model_option()] = None,
     output: Annotated[
         str,
         typer.Option("--output", "-o", help="Output format: text, json, or markdown"),
@@ -84,19 +84,19 @@ def summarize(
     verbose: Annotated[bool, verbose_option()] = False,
     debug: Annotated[bool, debug_option()] = False,
     init_config: Annotated[bool, init_config_option(TOOL_NAME, DEFAULTS)] = False,
-    discovery_db: Optional[str] = typer.Option(
+    discovery_db: str | None = typer.Option(
         None,
         "--discovery-db",
         help="Path to content discovery SQLite DB.",
         envvar="CONTENT_DISCOVERY_DB_PATH",
     ),
-    voice_memos_dir: Optional[str] = typer.Option(
+    voice_memos_dir: str | None = typer.Option(
         None,
         "--voice-memos-dir",
         help="Directory containing processed voice memo transcriptions.",
         envvar="VOICE_MEMOS_DIR",
     ),
-    days: Optional[int] = typer.Option(
+    days: int | None = typer.Option(
         None,
         "--days",
         help="Review the last N days instead of the current calendar week.",
@@ -106,7 +106,7 @@ def summarize(
         "--month",
         help="Review the full calendar month containing the target date.",
     ),
-    triage_db: Optional[str] = typer.Option(
+    triage_db: str | None = typer.Option(
         str(Path("~/sync/thread-triage/thread-triage.db").expanduser()),
         "--triage-db",
         help="Path to thread-triage SQLite DB. Defaults to ~/sync/thread-triage/thread-triage.db.",
@@ -122,7 +122,11 @@ def summarize(
 
     dry_run = resolve_dry_run(dry_run, no_llm)
 
-    target_date = datetime.date.fromisoformat(week) if week else datetime.date.today()
+    target_date = (
+        datetime.date.fromisoformat(week)
+        if week
+        else datetime.datetime.now().astimezone().date()
+    )
 
     try:
         llm_provider = resolve_provider(
@@ -131,7 +135,7 @@ def summarize(
     except ProviderSetupError as e:
         typer.echo(f"Error: {e}")
         raise typer.Exit(1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level CLI boundary: report cleanly and exit, don't show a raw traceback
         typer.echo(f"Error: {e}")
         raise typer.Exit(1)
 
@@ -188,7 +192,7 @@ def summarize(
     except LLMRunError as e:
         typer.echo(f"Error during LLM processing: {e}")
         raise typer.Exit(1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level CLI boundary: report cleanly and exit, don't show a raw traceback
         typer.echo(f"Error during LLM processing: {e}")
         raise typer.Exit(1)
 

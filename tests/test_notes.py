@@ -1,13 +1,11 @@
 import datetime
 from pathlib import Path
 
-
 from local_first_common.obsidian import (
+    format_notes_for_llm,
     get_week_dates,
     load_daily_notes_for_week,
-    format_notes_for_llm,
 )
-
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

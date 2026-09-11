@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from weekly_review.schema import WeekReview, WeeklyHighlight
+from weekly_review.schema import WeeklyHighlight, WeekReview
 
 
 class TestWeeklyHighlight:

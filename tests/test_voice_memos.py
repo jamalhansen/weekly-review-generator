@@ -77,3 +77,20 @@ class TestGetVoiceMemos:
         result = get_voice_memos(str(tmp_path), datetime.date(2026, 3, 9), datetime.date(2026, 3, 12))
         assert result[0] == "First."
         assert result[1] == "Second."
+
+    def test_strips_yaml_frontmatter_from_real_memo_notes(self, tmp_path):
+        # voice-journal writes each memo with frontmatter (date, time, type,
+        # source_audio) ahead of the entry -- the LLM prompt should only see
+        # the entry itself, not that metadata block.
+        make_memos(tmp_path, {
+            "2026-03-10-20-01-43-artist-agent-vault.md": (
+                '---\ndate: 2026-03-10\ntime: "20:01"\ntype: voice-memo\n'
+                "source_audio: 2026-03-10-20-01-43.m4a\n---\n\n"
+                "## Artist Agent Vault\n\nThinking about metadata storage.\n"
+            ),
+        })
+        result = get_voice_memos(str(tmp_path), datetime.date(2026, 3, 9), datetime.date(2026, 3, 12))
+        assert len(result) == 1
+        assert "source_audio" not in result[0]
+        assert "date:" not in result[0]
+        assert result[0] == "## Artist Agent Vault\n\nThinking about metadata storage."

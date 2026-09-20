@@ -130,7 +130,7 @@ def summarize(
 
     try:
         llm_provider = resolve_provider(
-            PROVIDERS, provider, model, debug=debug, no_llm=no_llm
+            PROVIDERS, provider, model, debug=debug, no_llm=no_llm, tool_name=TOOL_NAME
         )
     except ProviderSetupError as e:
         typer.echo(f"Error: {e}")

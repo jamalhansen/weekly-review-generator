@@ -23,7 +23,7 @@ from local_first_common.obsidian import (
     load_daily_notes_for_week,
 )
 from local_first_common.providers import PROVIDERS
-from local_first_common.tracking import register_tool, timed_run
+from local_first_common.tracking import register_tool
 
 from .core import (
     LLMRunError,
@@ -178,17 +178,13 @@ def summarize(
         triage_captures=triage_capture_items,
     )
 
+    llm_provider.source_location = period_start
+    llm_provider.item_count = processed
     try:
-        with timed_run(
-            "weekly-review-generator", llm_provider.model, source_location=period_start
-        ) as run:
-            response_data = llm_provider.complete(
-                system=system, user=user, response_model=WeekReview
-            )
-            review = process_llm_response(response_data, period_start, word_count)
-            run.item_count = processed
-            run.input_tokens = getattr(llm_provider, "input_tokens", None) or None
-            run.output_tokens = getattr(llm_provider, "output_tokens", None) or None
+        response_data = llm_provider.complete(
+            system=system, user=user, response_model=WeekReview
+        )
+        review = process_llm_response(response_data, period_start, word_count)
     except LLMRunError as e:
         typer.echo(f"Error during LLM processing: {e}")
         raise typer.Exit(1)

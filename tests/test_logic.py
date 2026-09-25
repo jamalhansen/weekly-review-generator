@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from weekly_review.logic import process_llm_response
+from weekly_review.core import process_llm_response
 
 
 class _FakeLLMResponse(BaseModel):

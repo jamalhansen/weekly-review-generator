@@ -134,10 +134,10 @@ def summarize(
         )
     except ProviderSetupError as e:
         typer.echo(f"Error: {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     except Exception as e:  # noqa: BLE001 - top-level CLI boundary: report cleanly and exit, don't show a raw traceback
         typer.echo(f"Error: {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     vault_root = find_vault_root()
     dates = get_date_range(target_date, days=days, month=month)
@@ -187,10 +187,10 @@ def summarize(
         review = process_llm_response(response_data, period_start, word_count)
     except LLMRunError as e:
         typer.echo(f"Error during LLM processing: {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     except Exception as e:  # noqa: BLE001 - top-level CLI boundary: report cleanly and exit, don't show a raw traceback
         typer.echo(f"Error during LLM processing: {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     # --- Output ---
     review_section = format_review_section(review)

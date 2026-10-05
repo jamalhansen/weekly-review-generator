@@ -13,18 +13,24 @@ def make_memos(tmp_path: Path, files: dict[str, str]) -> Path:
 
 class TestGetVoiceMemos:
     def test_returns_memos_in_range(self, tmp_path):
-        make_memos(tmp_path, {
-            "2026-03-10-morning.md": "Thought about the project.",
-            "2026-03-11-evening.md": "Wrapped up the week.",
-        })
+        make_memos(
+            tmp_path,
+            {
+                "2026-03-10-morning.md": "Thought about the project.",
+                "2026-03-11-evening.md": "Wrapped up the week.",
+            },
+        )
         result = get_voice_memos(str(tmp_path), datetime.date(2026, 3, 9), datetime.date(2026, 3, 12))
         assert len(result) == 2
 
     def test_excludes_out_of_range_files(self, tmp_path):
-        make_memos(tmp_path, {
-            "2026-03-05-old.md": "Old memo.",
-            "2026-03-10-current.md": "Current memo.",
-        })
+        make_memos(
+            tmp_path,
+            {
+                "2026-03-05-old.md": "Old memo.",
+                "2026-03-10-current.md": "Current memo.",
+            },
+        )
         result = get_voice_memos(str(tmp_path), datetime.date(2026, 3, 9), datetime.date(2026, 3, 12))
         assert len(result) == 1
         assert "Current memo." in result[0]
@@ -39,19 +45,25 @@ class TestGetVoiceMemos:
         assert result == []
 
     def test_ignores_non_md_txt_files(self, tmp_path):
-        make_memos(tmp_path, {
-            "2026-03-10-memo.md": "Valid memo.",
-            "2026-03-10-audio.mp3": "binary",
-            "2026-03-10-notes.txt": "Also valid.",
-        })
+        make_memos(
+            tmp_path,
+            {
+                "2026-03-10-memo.md": "Valid memo.",
+                "2026-03-10-audio.mp3": "binary",
+                "2026-03-10-notes.txt": "Also valid.",
+            },
+        )
         result = get_voice_memos(str(tmp_path), datetime.date(2026, 3, 9), datetime.date(2026, 3, 12))
         assert len(result) == 2
 
     def test_ignores_files_with_unparseable_dates(self, tmp_path):
-        make_memos(tmp_path, {
-            "not-a-date.md": "Should be ignored.",
-            "2026-03-10-valid.md": "Should be included.",
-        })
+        make_memos(
+            tmp_path,
+            {
+                "not-a-date.md": "Should be ignored.",
+                "2026-03-10-valid.md": "Should be included.",
+            },
+        )
         result = get_voice_memos(str(tmp_path), datetime.date(2026, 3, 9), datetime.date(2026, 3, 12))
         assert len(result) == 1
         assert "Should be included." in result[0]
@@ -62,18 +74,24 @@ class TestGetVoiceMemos:
         assert result == ["Meeting went well."]
 
     def test_inclusive_date_boundaries(self, tmp_path):
-        make_memos(tmp_path, {
-            "2026-03-09-start.md": "First day.",
-            "2026-03-12-end.md": "Last day.",
-        })
+        make_memos(
+            tmp_path,
+            {
+                "2026-03-09-start.md": "First day.",
+                "2026-03-12-end.md": "Last day.",
+            },
+        )
         result = get_voice_memos(str(tmp_path), datetime.date(2026, 3, 9), datetime.date(2026, 3, 12))
         assert len(result) == 2
 
     def test_results_sorted_by_filename(self, tmp_path):
-        make_memos(tmp_path, {
-            "2026-03-11-b.md": "Second.",
-            "2026-03-10-a.md": "First.",
-        })
+        make_memos(
+            tmp_path,
+            {
+                "2026-03-11-b.md": "Second.",
+                "2026-03-10-a.md": "First.",
+            },
+        )
         result = get_voice_memos(str(tmp_path), datetime.date(2026, 3, 9), datetime.date(2026, 3, 12))
         assert result[0] == "First."
         assert result[1] == "Second."
@@ -82,13 +100,16 @@ class TestGetVoiceMemos:
         # voice-journal writes each memo with frontmatter (date, time, type,
         # source_audio) ahead of the entry -- the LLM prompt should only see
         # the entry itself, not that metadata block.
-        make_memos(tmp_path, {
-            "2026-03-10-20-01-43-artist-agent-vault.md": (
-                '---\ndate: 2026-03-10\ntime: "20:01"\ntype: voice-memo\n'
-                "source_audio: 2026-03-10-20-01-43.m4a\n---\n\n"
-                "## Artist Agent Vault\n\nThinking about metadata storage.\n"
-            ),
-        })
+        make_memos(
+            tmp_path,
+            {
+                "2026-03-10-20-01-43-artist-agent-vault.md": (
+                    '---\ndate: 2026-03-10\ntime: "20:01"\ntype: voice-memo\n'
+                    "source_audio: 2026-03-10-20-01-43.m4a\n---\n\n"
+                    "## Artist Agent Vault\n\nThinking about metadata storage.\n"
+                ),
+            },
+        )
         result = get_voice_memos(str(tmp_path), datetime.date(2026, 3, 9), datetime.date(2026, 3, 12))
         assert len(result) == 1
         assert "source_audio" not in result[0]

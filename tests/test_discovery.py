@@ -141,8 +141,6 @@ class TestGetKeptItems:
     def test_inclusive_date_boundaries(self, tmp_path):
         db_path = make_db(tmp_path, SAMPLE_ROWS)
         # Both boundary dates should be included
-        items_start = get_kept_items(
-            db_path, datetime.date(2026, 3, 10), datetime.date(2026, 3, 10)
-        )
+        items_start = get_kept_items(db_path, datetime.date(2026, 3, 10), datetime.date(2026, 3, 10))
         assert len(items_start) == 1
         assert items_start[0]["title"] == "Article A"

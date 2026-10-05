@@ -1,5 +1,3 @@
-
-
 from weekly_review.markdown_output import (
     format_as_markdown,
     format_review_section,
@@ -25,9 +23,7 @@ class TestFormatAsMarkdown:
         assert "2026-02-23" in md
 
     def test_contains_highlight_category(self):
-        review = self._make_review(
-            highlights=[WeeklyHighlight(category="Work", summary="Built things")]
-        )
+        review = self._make_review(highlights=[WeeklyHighlight(category="Work", summary="Built things")])
         md = format_as_markdown(review)
         assert "Work" in md
 
@@ -60,9 +56,7 @@ class TestFormatReviewSection:
         assert "> A great week" in section
 
     def test_uses_h3_for_highlights(self):
-        review = self._make_review(
-            highlights=[WeeklyHighlight(category="Work", summary="Built things")]
-        )
+        review = self._make_review(highlights=[WeeklyHighlight(category="Work", summary="Built things")])
         section = format_review_section(review)
         assert "### Highlights" in section
         assert "**Work**" in section

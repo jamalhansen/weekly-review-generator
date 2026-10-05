@@ -34,6 +34,4 @@ def get_kept_items(db_path: str, start_date: date, end_date: date) -> list[dict]
     except DiscoveryDBError:
         raise
     except Exception as e:
-        raise DiscoveryDBError(
-            f"Failed to query content discovery DB at {db_path}: {e}"
-        ) from e
+        raise DiscoveryDBError(f"Failed to query content discovery DB at {db_path}: {e}") from e

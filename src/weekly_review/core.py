@@ -66,9 +66,7 @@ def get_output_filename(
     return f"{iso_year}-W{iso_week:02d}.md"
 
 
-def process_llm_response(
-    response_data, period_start: str, word_count: int
-) -> WeekReview:
+def process_llm_response(response_data, period_start: str, word_count: int) -> WeekReview:
     """Post-process and validate LLM response data."""
     if hasattr(response_data, "model_dump"):
         response_data = response_data.model_dump()

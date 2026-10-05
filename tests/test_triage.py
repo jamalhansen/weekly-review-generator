@@ -128,9 +128,7 @@ class TestGetTriageCaptures:
 
     def test_result_has_expected_keys(self, tmp_path):
         db_path = make_triage_db(tmp_path, SAMPLE_ROWS)
-        items = get_triage_captures(
-            db_path, datetime.date(2026, 3, 9), datetime.date(2026, 3, 14)
-        )
+        items = get_triage_captures(db_path, datetime.date(2026, 3, 9), datetime.date(2026, 3, 14))
         assert len(items) > 0
         for item in items:
             assert set(item.keys()) == {"thread_text", "suggested_action"}
@@ -145,15 +143,11 @@ class TestGetTriageCaptures:
 
     def test_returns_empty_list_when_no_matches(self, tmp_path):
         db_path = make_triage_db(tmp_path, SAMPLE_ROWS)
-        result = get_triage_captures(
-            db_path, datetime.date(2025, 1, 1), datetime.date(2025, 1, 7)
-        )
+        result = get_triage_captures(db_path, datetime.date(2025, 1, 1), datetime.date(2025, 1, 7))
         assert result == []
 
     def test_raises_on_bad_db(self, tmp_path):
         bad_db = tmp_path / "bad.db"
         bad_db.write_text("not a sqlite file")
         with pytest.raises(TriageDBError, match="Failed to query"):
-            get_triage_captures(
-                str(bad_db), datetime.date(2026, 3, 9), datetime.date(2026, 3, 14)
-            )
+            get_triage_captures(str(bad_db), datetime.date(2026, 3, 9), datetime.date(2026, 3, 14))

@@ -153,5 +153,5 @@ def format_as_markdown(review: WeekReview) -> str:
 
     lines.append("---")
     lines.append(f"**Word Count Input:** {review.word_count_input}")
-    
+
     return "\n".join(lines)

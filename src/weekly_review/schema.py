@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -24,6 +23,7 @@ class WeeklyHighlight(BaseModel):
     def _coerce_items(cls, v):
         return _coerce_str_to_list(v)
 
+
 class WeekReview(BaseModel):
     week_of: str = Field(..., description="ISO date of the Monday of the week (YYYY-MM-DD)")
     headline: str | None = Field(default="Weekly Summary", description="One sentence capturing the theme of the week")
@@ -36,7 +36,9 @@ class WeekReview(BaseModel):
     )
     highlights: list[WeeklyHighlight] | None = Field(default_factory=list)
     links_saved: list[str] | None = Field(default_factory=list, description="URLs found in the notes")
-    suggested_intentions: list[str] | None = Field(default_factory=list, description="3 suggested intentions for the coming week")
+    suggested_intentions: list[str] | None = Field(
+        default_factory=list, description="3 suggested intentions for the coming week"
+    )
     word_count_input: int = Field(..., description="Total words fed to the model")
 
     @field_validator("links_saved", "suggested_intentions", mode="before")

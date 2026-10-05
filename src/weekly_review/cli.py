@@ -68,12 +68,8 @@ def _setup_tool_logging(verbose: bool, debug: bool) -> None:
 
 @app.command()
 def summarize(
-    week: str | None = typer.Option(
-        None, "--week", "-w", help="ISO date in target period (default: today)"
-    ),
-    provider: Annotated[str, provider_option()] = os.environ.get(
-        "MODEL_PROVIDER", "ollama"
-    ),
+    week: str | None = typer.Option(None, "--week", "-w", help="ISO date in target period (default: today)"),
+    provider: Annotated[str, provider_option()] = os.environ.get("MODEL_PROVIDER", "ollama"),
     model: Annotated[str | None, model_option()] = None,
     output: Annotated[
         str,
@@ -122,16 +118,10 @@ def summarize(
 
     dry_run = resolve_dry_run(dry_run, no_llm)
 
-    target_date = (
-        datetime.date.fromisoformat(week)
-        if week
-        else datetime.datetime.now().astimezone().date()
-    )
+    target_date = datetime.date.fromisoformat(week) if week else datetime.datetime.now().astimezone().date()
 
     try:
-        llm_provider = resolve_provider(
-            PROVIDERS, provider, model, debug=debug, no_llm=no_llm, tool_name=TOOL_NAME
-        )
+        llm_provider = resolve_provider(PROVIDERS, provider, model, debug=debug, no_llm=no_llm, tool_name=TOOL_NAME)
     except ProviderSetupError as e:
         typer.echo(f"Error: {e}")
         raise typer.Exit(1) from None
@@ -148,23 +138,13 @@ def summarize(
     skipped = len(dates) - processed
 
     if not notes:
-        typer.echo(
-            f"No notes found for the period starting {period_start} in {vault_root}"
-        )
+        typer.echo(f"No notes found for the period starting {period_start} in {vault_root}")
         raise typer.Exit(0)
 
     # --- Load optional sources ---
-    discovery_items = (
-        get_kept_items(discovery_db, dates[0], dates[-1]) if discovery_db else None
-    )
-    voice_memo_texts = (
-        get_voice_memos(voice_memos_dir, dates[0], dates[-1])
-        if voice_memos_dir
-        else None
-    )
-    triage_capture_items = (
-        get_triage_captures(triage_db, dates[0], dates[-1]) if triage_db else None
-    )
+    discovery_items = get_kept_items(discovery_db, dates[0], dates[-1]) if discovery_db else None
+    voice_memo_texts = get_voice_memos(voice_memos_dir, dates[0], dates[-1]) if voice_memos_dir else None
+    triage_capture_items = get_triage_captures(triage_db, dates[0], dates[-1]) if triage_db else None
 
     notes_text = strip_obsidian_callouts(format_notes_for_llm(notes))
     word_count = get_word_count(notes_text)
@@ -181,9 +161,7 @@ def summarize(
     llm_provider.source_location = period_start
     llm_provider.item_count = processed
     try:
-        response_data = llm_provider.complete(
-            system=system, user=user, response_model=WeekReview
-        )
+        response_data = llm_provider.complete(system=system, user=user, response_model=WeekReview)
         review = process_llm_response(response_data, period_start, word_count)
     except LLMRunError as e:
         typer.echo(f"Error during LLM processing: {e}")

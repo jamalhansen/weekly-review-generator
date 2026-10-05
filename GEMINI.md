@@ -69,23 +69,25 @@ The tool discovers the vault root via `OBSIDIAN_VAULT_PATH` env var. If not set,
 
 ```python
 class WeeklyHighlight(BaseModel):
-    category: str        # "Work", "Learning", "Writing", "Personal", "Links"
-    summary: str         # 1-2 sentences
-    items: list[str]     # specific bullet points
+    category: str  # "Work", "Learning", "Writing", "Personal", "Links"
+    summary: str  # 1-2 sentences
+    items: list[str]  # specific bullet points
+
 
 class GoalProgress(BaseModel):
     goal: str
-    status: str          # brief assessment
-    evidence: str        # what in the notes supports this
+    status: str  # brief assessment
+    evidence: str  # what in the notes supports this
+
 
 class WeekReview(BaseModel):
-    week_of: str                      # "2026-03-02"
-    headline: str                     # one sentence capturing the week
+    week_of: str  # "2026-03-02"
+    headline: str  # one sentence capturing the week
     highlights: list[WeeklyHighlight]
     goal_progress: list[GoalProgress]
-    links_saved: list[str]            # URLs found in the notes
-    open_threads: list[str]           # unresolved items, incomplete tasks, loose thoughts
-    word_count_input: int             # total words fed to the model
+    links_saved: list[str]  # URLs found in the notes
+    open_threads: list[str]  # unresolved items, incomplete tasks, loose thoughts
+    word_count_input: int  # total words fed to the model
 ```
 
 ---

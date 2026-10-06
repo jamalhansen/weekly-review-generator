@@ -17,7 +17,7 @@ class TestWeeklyHighlight:
     def test_bare_string_items_coerced_to_single_item_list(self):
         """phi4-mini has returned a bare string for a list[str] field in
         production -- confirmed live 2026-09-20."""
-        h = WeeklyHighlight(category="Work", items="Shipped the thing")
+        h = WeeklyHighlight(category="Work", items="Shipped the thing")  # pyright: ignore[reportArgumentType]  # bare str on purpose
         assert h.items == ["Shipped the thing"]
 
 
@@ -36,7 +36,7 @@ class TestWeekReview:
 
     def test_missing_required_fields_raises(self):
         with pytest.raises(ValidationError):
-            WeekReview()
+            WeekReview()  # pyright: ignore[reportCallIssue]  # missing fields on purpose
 
     def test_full_review(self):
         review = WeekReview(
@@ -47,6 +47,7 @@ class TestWeekReview:
             suggested_intentions=["Finish API doc"],
             word_count_input=1234,
         )
+        assert review.highlights is not None and review.links_saved is not None
         assert len(review.highlights) == 1
         assert review.links_saved[0] == "https://example.com"
 
@@ -57,7 +58,7 @@ class TestWeekReview:
         model meant as a one-item list, not an invalid response."""
         review = WeekReview(
             week_of="2026-02-23",
-            links_saved="http://192.168.86.21:8422",
+            links_saved="http://192.168.86.21:8422",  # pyright: ignore[reportArgumentType]  # bare str on purpose
             word_count_input=100,
         )
         assert review.links_saved == ["http://192.168.86.21:8422"]
@@ -65,7 +66,7 @@ class TestWeekReview:
     def test_bare_string_suggested_intentions_coerced_to_single_item_list(self):
         review = WeekReview(
             week_of="2026-02-23",
-            suggested_intentions="Review the effectiveness of language learning tools.",
+            suggested_intentions="Review the effectiveness of language learning tools.",  # pyright: ignore[reportArgumentType]  # bare str on purpose
             word_count_input=100,
         )
         assert review.suggested_intentions == ["Review the effectiveness of language learning tools."]
